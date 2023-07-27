@@ -42,7 +42,7 @@ def register_user(request):
             password = form.cleaned_data['password1']
             user = authenticate(username=username, password=password)
             login(request, user)
-            messages.success(request, "You have successfully registered! Choose a preferred package to continue")
+            messages.success(request, "Information saved successfully! Verify phone number to continue")
             user_id = request.user.id
             return redirect('phone_verification')
     else:
@@ -100,10 +100,12 @@ def verify_code(request):
             account = Account.objects.get(user_id=request.user.id)
             account.verified = True
             account.save()
+            logout(request)
             return redirect('home')  # Replace 'success_page' with the URL of the success page.
         else:
             # Code is incorrect, display an error message, or redirect back to the verification page.
             messages.success(request, "Verification code entered is incorrect.")
+            logout(request)
             return redirect('phone_verification')
 
     else:
