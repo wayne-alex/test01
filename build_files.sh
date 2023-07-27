@@ -16,4 +16,4 @@ source venv/bin/activate
 pip install -r requirements.txt
 
 # Run collectstatic (assuming you have it defined in your Django project)
-python3.9 manage.py collectstatic
+#python3.9 manage.py collectstatic
