@@ -21,7 +21,7 @@ def home(request):
             email = request.user.email
 
             account = Account.objects.get(user_id=request.user.id)
-            print(user_name,email,account)
+            print(user_name, email, account)
             return render(request, 'home.html', {'username': user_name, 'email': email, 'account': account})
 
 
@@ -50,21 +50,29 @@ def register_user(request):
 
     return render(request, 'register.html', {'form': form})
 
+
 @login_required
 def verify_phone_number(request):
     if request.method == 'POST':
-        # Process the phone number, send verification code through WhatsApp, and set verification_code_sent to True.
-        # Code to send the verification code goes here.
         phone = request.POST.get('phone_number')
         url = 'http://13.51.196.90:3000/trigger-function'
         payload = {'phone_number': phone}
         user_id = request.user.id
-        phone_number = phone
         verified = False
-        account = Account(user_id=user_id, phone_number=phone_number, verified=verified)
-        account.save()
 
+        # Check if the phone number is already associated with another user
+        try:
+            account = Account.objects.get(phone_number=phone)
+            if account.user_id != user_id:
+                messages.error(request,
+                               'The phone number is already in use by another user. Please try another number.')
+                return render(request, 'mobile.html', {'verification_code_sent': False})
+        except Account.DoesNotExist:
+            # If the phone number is not associated with any user, create a new account
+            account = Account(user_id=user_id, phone_number=phone, verified=verified)
+            account.save()
 
+        # If the phone number is associated with the current user or not associated with any user, continue with sending the verification code
         try:
             response = requests.get(url, params=payload)
             response.raise_for_status()
@@ -76,7 +84,7 @@ def verify_phone_number(request):
             return render(request, 'mobile.html', {'verification_code_sent': True})
 
         except requests.exceptions.RequestException as e:
-            messages.error(request, 'Error while sending verification code.')
+            messages.error(request, 'Error while sending the verification code.')
             print(f"Error: {e}")
             return render(request, 'mobile.html', {'verification_code_sent': False})
 
